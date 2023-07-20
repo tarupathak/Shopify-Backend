@@ -1,16 +1,13 @@
 const express = require("express");
-const mongoose = require("mongoose");
+require("./db/config");
+const user = require("./db/user");
 const app = express();
-const connectDB = async () => {
-  mongoose.connect(
-    "mongodb+srv://pathaktaru2002:jHDZVsfhjjTYuoPC@cluster0.ti2tfsl.mongodb.net/e-comm"
-  );
-  const productSchema = new mongoose.Schema({});
-  const product = mongoose.model("product", productSchema);
-  const data = await product.find();
-  console.log(data);
-};
+app.use(express.json());
 
-connectDB();
+app.post("/register", async (req, resp) => {
+  let uuser = await new user(req.body);
+  let result = await uuser.save();
+  resp.send(result);
+});
 
 app.listen(5000);
