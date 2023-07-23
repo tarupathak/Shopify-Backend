@@ -3,6 +3,8 @@ const cors = require("cors");
 const user = require("./db/user");
 require("./db/config");
 const product = require("./db/product");
+const Jwt = require("jsonwebtoken");
+const jwtKey = "shopify";
 const mongoose = require("mongoose");
 const app = express();
 app.use(express.json());
@@ -13,14 +15,24 @@ app.post("/register", async (req, resp) => {
   let result = await uuser.save();
   result = result.toObject();
   delete result.password;
-  resp.send(result);
+  Jwt.sign({ result }, jwtKey, { expiresIn: "2h" }, (err, token) => {
+    if (err) {
+      resp.send({ result: "Something went wrong." });
+    }
+    resp.send({ result, auth: token });
+  });
 });
 
 app.post("/login", async (req, resp) => {
   if (req.body.password && req.body.email) {
     let uuser = await user.findOne(req.body).select("-password");
     if (uuser) {
-      resp.send(uuser);
+      Jwt.sign({ uuser }, jwtKey, { expiresIn: "2h" }, (err, token) => {
+        if (err) {
+          resp.send({ result: "Something went wrong." });
+        }
+        resp.send({ uuser, auth: token });
+      });
     } else {
       resp.send({ result: "No user found" });
     }
@@ -70,7 +82,7 @@ app.put("/update-product/:id", async (req, resp) => {
 
 app.get("/search/:key", async (req, resp) => {
   let result = await product.find({
-    "$or": [
+    $or: [
       { name: { $regex: req.params.key } },
       { company: { $regex: req.params.key } },
       { price: { $regex: req.params.key } },
