@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const user = require("./db/user");
-require('./db/config')
+require("./db/config");
 const product = require("./db/product");
 const mongoose = require("mongoose");
 const app = express();
@@ -9,7 +9,7 @@ app.use(express.json());
 app.use(cors());
 
 app.post("/register", async (req, resp) => {
-  let uuser =  new user(req.body);
+  let uuser = new user(req.body);
   let result = await uuser.save();
   result = result.toObject();
   delete result.password;
@@ -30,44 +30,42 @@ app.post("/login", async (req, resp) => {
 });
 
 app.post("/add-product", async (req, resp) => {
-  let products =new product(req.body);
+  let products = new product(req.body);
   let result = await products.save();
   resp.send(result);
 });
 
-app.get('/products', async (req,resp)=>{
+app.get("/products", async (req, resp) => {
   let products = await product.find();
-  if(products.length>0){
-    resp.send(products)
+  if (products.length > 0) {
+    resp.send(products);
+  } else {
+    resp.send({ result: "No Products Found" });
   }
-  else{
-    resp.send({result:"No Products Found"});
-  }
-})
+});
 
-app.delete('/product/:id', async (req,resp) => {
-  const result = await product.deleteOne({_id:req.params.id});
+app.delete("/product/:id", async (req, resp) => {
+  const result = await product.deleteOne({ _id: req.params.id });
   resp.send(result);
-})
+});
 
-app.get('/product-update/:id', async (req,resp)=>{
-  let result = await product.findOne({_id:req.params.id});
-  if(result){
+app.get("/product-update/:id", async (req, resp) => {
+  let result = await product.findOne({ _id: req.params.id });
+  if (result) {
     resp.send(result);
+  } else {
+    resp.send({ result: "No record found" });
   }
-  else{
-    resp.send({result:"No record found"});
-  }
-})
+});
 
-app.put('/update-product/:id',async (req,resp)=>{
+app.put("/update-product/:id", async (req, resp) => {
   let result = await product.updateOne(
-    {id: req.params.id},
+    { _id: req.params.id },
     {
-      $set : req.body
+      $set: req.body,
     }
-  )
+  );
   resp.send(result);
-})
+});
 
 app.listen(8080);
