@@ -45,4 +45,9 @@ app.get('/products', async (req,resp)=>{
   }
 })
 
+app.delete('/product/:id', async (req,resp) => {
+  const result = await product.deleteOne({_id:req.params.id});
+  resp.send(result);
+})
+
 app.listen(8080);
