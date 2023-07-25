@@ -17,7 +17,7 @@ app.post("/register", async (req, resp) => {
   delete result.password;
   Jwt.sign({ result }, jwtKey, { expiresIn: "2h" }, (err, token) => {
     if (err) {
-      resp.send({ "result": "Something went wrong." });
+      resp.send({ result: "Something went wrong." });
     }
     resp.send({ result, auth: token });
   });
@@ -41,13 +41,13 @@ app.post("/login", async (req, resp) => {
   }
 });
 
-app.post("/add-product", async (req, resp) => {
+app.post("/add-product", verifyToken, async (req, resp) => {
   let products = new product(req.body);
   let result = await products.save();
   resp.send(result);
 });
 
-app.get("/products", async (req, resp) => {
+app.get("/products", verifyToken, async (req, resp) => {
   let products = await product.find();
   if (products.length > 0) {
     resp.send(products);
@@ -56,12 +56,12 @@ app.get("/products", async (req, resp) => {
   }
 });
 
-app.delete("/product/:id", async (req, resp) => {
+app.delete("/product/:id", verifyToken, async (req, resp) => {
   const result = await product.deleteOne({ _id: req.params.id });
   resp.send(result);
 });
 
-app.get("/product-update/:id", async (req, resp) => {
+app.get("/product-update/:id", verifyToken, async (req, resp) => {
   let result = await product.findOne({ _id: req.params.id });
   if (result) {
     resp.send(result);
@@ -70,7 +70,7 @@ app.get("/product-update/:id", async (req, resp) => {
   }
 });
 
-app.put("/update-product/:id", async (req, resp) => {
+app.put("/update-product/:id", verifyToken, async (req, resp) => {
   let result = await product.updateOne(
     { _id: req.params.id },
     {
@@ -80,7 +80,7 @@ app.put("/update-product/:id", async (req, resp) => {
   resp.send(result);
 });
 
-app.get("/search/:key", async (req, resp) => {
+app.get("/search/:key", verifyToken, async (req, resp) => {
   let result = await product.find({
     $or: [
       { name: { $regex: req.params.key } },
@@ -92,23 +92,24 @@ app.get("/search/:key", async (req, resp) => {
   resp.send(result);
 });
 
-// function verifyToken(req, resp, next) {
-//   const token = req.headers["autherization"];
-//   if (token) {
-//     token = token.split("")[1];
-//     console.warn("middleware called", token);
-//     Jwt.verify(token, jwtKey, (err, valid) => {
-//       if (err) {
-//         resp.send("Please provide valid token with header");
-//       } else {
-//         next();
-//       }
-//     });
-//   } else {
-//     resp.status(403).send("Please add token with header");
-//   }
-//   // console.warn("middleware called",token)
-//   next();
-// }
+function verifyToken(req, resp, next) {
+  let token = req.headers["authorization"];
+  if (token) {
+    token = token.split(" ")[1];
+    console.warn("middleware called if", token);
+    Jwt.verify(token, jwtKey, (err, valid) => {
+      if (err) {
+        resp
+          .status(401)
+          .send({ result: "Please provide valid token with header" });
+      } else {
+        next();
+      }
+    });
+  } else {
+    resp.status(403).send({ result: "Please add token with header" });
+  }
+  // console.warn("middleware called", token);
+}
 
 app.listen(8080);
